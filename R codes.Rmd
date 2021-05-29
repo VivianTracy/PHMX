@@ -1,0 +1,123 @@
+---
+title: "638_A1"
+author: "Zhenlian"
+date: "Jul 14, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r}
+#libaries
+library(readr)
+library(ggplot2)
+
+library(dplyr)
+library(gridExtra)
+library(grid)
+
+
+
+```
+
+```{r}
+#import csv file.
+WD<-getwd()
+if(!is.null(WD)) setwd(WD)
+raw = read.csv('../data/raw_R.csv')
+
+
+
+```
+```{r}
+#Check data structure
+
+str(raw)
+raw$AGE<-as.numeric(as.character(raw$AGE))
+raw$WT<-as.numeric(as.character(raw$WT))
+raw$DV<-as.numeric(as.character(raw$DV))
+str(raw)
+```
+
+```{r}
+str(demo)
+
+```
+
+
+
+```{r}
+#histogram of age and weight:
+demo<-raw%>%filter(!duplicated(id))%>%select(id,WT,AGE,RACEN, GENDER)
+
+
+weight<-ggplot(demo, aes(x=WT)) +
+  #geom_histogram() + 
+  geom_histogram(binwidth=5,color="blue",fill="white")+
+  ggtitle("Weight distribution")+
+  xlab("Weight(kg)") +
+  ylab("Count")
+AGE<-ggplot(demo, aes(x=AGE)) +
+  #geom_histogram() + 
+  geom_histogram(binwidth=5,color="red",fill="white")+
+  ggtitle("AGE distribution")+
+  xlab("Age (years)") +
+  ylab("Count")
+
+#Gender and race distribution:
+gender<-demo%>%count(GENDER)%>%mutate(freq=n/sum(n))
+gender
+race<-demo%>%count(RACEN)%>%mutate(freq=n/sum(n))
+race
+
+
+#arrange weight, Age in one panel
+
+grid.arrange(weight,AGE,ncol=2)
+
+
+```
+#If needed, Histogram of gender and race distribution:
+demo$GENDER<-as.factor(demo$GENDER)   ##need to change to factor otherwise the legend won't shown after customized.
+str(demo)
+gender_his<-ggplot(demo, aes(GENDER))+
+  geom_bar() +
+  ylab("Count")+
+  labs(title="Gender distribution")+
+  scale_x_discrete(name="Gender",labels=c("0"="Female","1"="Male"))
+ 
+ 
+   
+race_his<-ggplot(demo, aes(RACEN))+
+  geom_bar()+
+  labs(title="Race distribution",x="Race Codes",y="Count")
+
+
+```{r}
+#Check correlation of demographic variables:
+demo<-demo%>%select(AGE,WT,RACEN,GENDER)
+sapply(demo,is.numeric)
+pairs(demo)
+cor(demo)
+```
+
+
+
+```{r}
+#Use facet.grid to plot both DG100 and DG250:
+
+#First change the two "levels" in DOSE to 100 mg and 250 mg. 
+levels(raw$DOSE)<-c("100mg","250mg")  #can be only one level?
+raw$DOSE<-as.factor(as.character(raw$DOSE))
+P1<-ggplot(raw, aes(x=TIME, y=DV,group_by(id),color=factor(FORMULATION))) + 
+geom_point() +
+  aes(color=factor(FORMULATION,labels=c("0"="IV","1"="ORAL")))+stat_summary(fun.y=mean,geom="line",size=2)+
+  facet_grid(.~DOSE)+
+  theme(legend.title=element_blank())+
+  ylab("Concentration(ug/L)")+
+  xlab("TIME(hr)")
+P1
+P2<-P1+scale_y_log10()
+P2
+
+```
+
