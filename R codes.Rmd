@@ -96,8 +96,7 @@ race_his<-ggplot(demo, aes(RACEN))+
 ```{r}
 #Check correlation of demographic variables:
 demo<-demo%>%select(AGE,WT,RACEN,GENDER)
-sapply(demo,is.numeric)
-pairs(demo)
+
 cor(demo)
 ```
 
